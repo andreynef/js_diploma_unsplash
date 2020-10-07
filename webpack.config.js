@@ -3,6 +3,8 @@ const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const devMode = process.env.NODE_ENV !== 'production';
+const GLOBAL_CSS_REGEXP = /\.global\.css$/;
+
 
 let conf = {
   mode: 'development',
@@ -19,22 +21,45 @@ let conf = {
           }
         }
       },
-      // css 
+      // css
       {
-        test: /\.(sa|sc|c)ss$/,
-        use: [
+        test: /\.css$/,
+        use: [//действие справа налево, сначала less потом css потом style, потом сверху в бандл.
+          'style-loader',//style
           {
-            loader: MiniCssExtractPlugin.loader,
+            loader: 'css-loader',
             options: {
-              hmr: process.env.NODE_ENV === 'development',
-            },
-          },
-          'css-loader',
-          'sass-loader',
+              modules: {//все css файлы воспринимаются как модули
+                mode: 'local',
+                localIdentName: '[name]__[local]--[hash:base64:5]',//маркировка сгенерированных стилей
+              }
+            }
+          },//css
         ],
+        exclude: GLOBAL_CSS_REGEXP // match all css files except GLOBAL_CSS_REGEXP и превращал их в css модули.
       },
+
       {
-        test: /\.(png|jpe?g|gif)$/i,
+        test: GLOBAL_CSS_REGEXP,// матчить только их. И тжсм сделать в серверной чести но без style
+        use: ["style-loader", "css-loader"]
+      },
+
+      // {
+      //   test: /\.(sa|sc|c)ss$/,
+      //   use: [
+      //     {
+      //       loader: MiniCssExtractPlugin.loader,
+      //       options: {
+      //         hmr: process.env.NODE_ENV === 'development',
+      //       },
+      //     },
+      //     'css-loader',
+      //     'sass-loader',
+      //   ],
+      // },
+
+      {
+        test: /\.(png|jpe?g|gif|svg)$/i,
         use: [
           {
             loader: 'file-loader',
@@ -50,13 +75,13 @@ let conf = {
   },
   plugins: [
     new CleanWebpackPlugin(),//чистка старья/перезапись папки build
-    new MiniCssExtractPlugin({//для css
-      filename: devMode ? '[name].css' : '[name].[hash].css',
-      chunkFilename: devMode ? '[id].css' : '[id].[hash].css',
-    }),
+    // new MiniCssExtractPlugin({//для css
+    //   filename: devMode ? '[name].css' : '[name].[hash].css',
+    //   chunkFilename: devMode ? '[id].css' : '[id].[hash].css',
+    // }),
     new HtmlWebpackPlugin({// перезапись html в папку build 
       template: './src/index.html',//копия с шаблона
-      favicon: './src/icon/favicon.ico'//вставляет в head
+      favicon: './src/icons/instagram.ico'//вставляет в head
     }),
   ],
   output: {
